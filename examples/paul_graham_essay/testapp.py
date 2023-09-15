@@ -10,6 +10,7 @@ logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout))
 from dotenv import find_dotenv, load_dotenv
 
 from llama_index import (
+    ServiceContext,
     SimpleDirectoryReader,
     StorageContext,
     VectorStoreIndex,
@@ -17,6 +18,9 @@ from llama_index import (
 )
 
 load_dotenv(find_dotenv())
+
+# Parse documents into configurable chunk size
+service_context = ServiceContext.from_defaults(chunk_size=1000)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 openai.log = None
@@ -34,7 +38,9 @@ if documents is not None:
         index = load_index_from_storage(storage_context)
     except FileNotFoundError:
         # Create a new index
-        index = VectorStoreIndex.from_documents(documents)
+        index = VectorStoreIndex.from_documents(
+            documents, service_context=service_context
+        )
         print("No storage index found, created new index")
         # Persist the index to disk
         index.storage_context.persist()
